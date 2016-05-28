@@ -89,7 +89,7 @@ public class CpuCore {
 		switch (stateA) {
 		case 0x0:
 			if (opcode == 0x00E0) {
-				clearScrean();
+				clearScreen();
 			} else if (opcode == 0x00EE) {
 				returnFromSubroutine();
 			}
@@ -122,55 +122,55 @@ public class CpuCore {
 		case 0x7:
 			addNNToVX();
 			break;
-			
+
 		case 0x8:
 			byte stateD = TypeUtilities.getNByte(opcode);
-			
-			switch(stateD){
+
+			switch (stateD) {
 			case 0x0:
 				setVXToVY();
 				break;
-				
+
 			case 0x1:
 				setVXToVXORVY();
 				break;
-				
+
 			case 0x2:
 				setVXToVXANDVY();
 				break;
-				
+
 			case 0x3:
-				// set VX to VX xor VY
+				setVXToVXXORVY();
 				break;
-				
+
 			case 0x4:
-				// add VY to VX, set VF to 1 if carry
+				addVYtoVX();
 				break;
-				
+
 			case 0x5:
-				// subtract VY from VX, set VF to 0 if borrow
+				subtractVYfromVX();
 				break;
-				
+
 			case 0x6:
-				// shift VX by 1 to the right, set VF to least sign. bit
+				shiftVXByOneToTheRight();
 				break;
-				
+
 			case 0x7:
-				// set VX to VY minus VX, set VF to 0 when borrow
+				subtractVXfromVY();
 				break;
-				
+
 			case 0xE:
-				// shift VF by 1 to the left, set VF to most sign. bit
+				shiftVXByOneToTheLeft();
 				break;
 			}
 			break;
 		}
 	}
 
-	private void clearScrean() {
+	private void clearScreen() {
 		graphics.clear();
 		drawFlag = true;
-		
+
 		nextInstruction();
 	}
 
@@ -211,41 +211,139 @@ public class CpuCore {
 		if (registers.load(x) == registers.load(y))
 			skipInstruction();
 	}
-	
+
 	private void setVXToNN() {
 		byte x = TypeUtilities.getXByte(opcode);
 		byte NN = TypeUtilities.getNNByte(opcode);
-		
+
 		registers.save(x, NN);
 		nextInstruction();
 	}
-	
+
 	private void addNNToVX() {
 		byte x = TypeUtilities.getXByte(opcode);
 		byte NN = TypeUtilities.getNNByte(opcode);
-		
+
 		registers.save(x, (byte) (registers.load(x) + NN));
+
+		nextInstruction();
 	}
-	
+
 	private void setVXToVY() {
 		byte x = TypeUtilities.getXByte(opcode);
 		byte y = TypeUtilities.getYByte(opcode);
-		
+
 		registers.save(x, registers.load(y));
+
+		nextInstruction();
 	}
-	
+
 	private void setVXToVXORVY() {
 		byte x = TypeUtilities.getXByte(opcode);
 		byte y = TypeUtilities.getYByte(opcode);
-		
+
 		registers.save(x, (byte) (registers.load(x) | registers.load(y)));
+
+		nextInstruction();
 	}
-	
+
 	private void setVXToVXANDVY() {
 		byte x = TypeUtilities.getXByte(opcode);
 		byte y = TypeUtilities.getYByte(opcode);
-		
+
 		registers.save(x, (byte) (registers.load(x) & registers.load(y)));
+
+		nextInstruction();
+	}
+
+	private void setVXToVXXORVY() {
+		byte x = TypeUtilities.getXByte(opcode);
+		byte y = TypeUtilities.getYByte(opcode);
+
+		registers.save(x, (byte) (registers.load(x) ^ registers.load(y)));
+
+		nextInstruction();
+	}
+
+	private void addVYtoVX() {
+		short result = 0;
+
+		byte x = TypeUtilities.getXByte(opcode);
+		byte y = TypeUtilities.getYByte(opcode);
+
+		short xv = TypeUtilities.byteAsShort(registers.load(x));
+		short yv = TypeUtilities.byteAsShort(registers.load(y));
+
+		result = (short) (xv + yv);
+
+		if (isCarryBit(result))
+			registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 1);
+		else
+			registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 0);
+
+		nextInstruction();
+	}
+
+	private void subtractVYfromVX() {
+		short result = 0;
+
+		byte x = TypeUtilities.getXByte(opcode);
+		byte y = TypeUtilities.getYByte(opcode);
+
+		short xv = TypeUtilities.byteAsShort(registers.load(x));
+		short yv = TypeUtilities.byteAsShort(registers.load(y));
+
+		result = (short) (xv - yv);
+
+		if (isSignBit(result))
+			registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 0);
+		else
+			registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 1);
+
+		nextInstruction();
+	}
+
+	private void shiftVXByOneToTheRight() {
+		byte x = TypeUtilities.getXByte(opcode);
+
+		byte leastBit = (byte) (registers.load(x) & 0x01);
+
+		registers.save(RegistersConstants.REGISTER_CARRY_FLAG, leastBit);
+
+		registers.save(x, (byte) (registers.load(x) >>> 1));
+
+		nextInstruction();
+	}
+
+	private void subtractVXfromVY() {
+		short result = 0;
+
+		byte x = TypeUtilities.getXByte(opcode);
+		byte y = TypeUtilities.getYByte(opcode);
+
+		short xv = TypeUtilities.byteAsShort(registers.load(x));
+		short yv = TypeUtilities.byteAsShort(registers.load(y));
+
+		result = (short) (yv - xv);
+
+		if (isSignBit(result))
+			registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 0);
+		else
+			registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 1);
+
+		nextInstruction();
+	}
+
+	private void shiftVXByOneToTheLeft() {
+		byte x = TypeUtilities.getXByte(opcode);
+
+		byte mostBit = (byte) ((registers.load(x) & 0x80) >> 7);
+
+		registers.save(RegistersConstants.REGISTER_CARRY_FLAG, mostBit);
+
+		registers.save(x, (byte) (registers.load(x) << 1));
+
+		nextInstruction();
 	}
 
 	public void drawGraphics() {
@@ -255,13 +353,23 @@ public class CpuCore {
 
 		drawFlag = false;
 	}
-	
+
 	private void nextInstruction() {
 		programCounter += 2;
 	}
 
 	private void skipInstruction() {
 		programCounter += 4;
+	}
+
+	private boolean isCarryBit(short value) {
+		short carryBit = (short) ((value >>> 8) & 0x0001);
+
+		return carryBit == 1 ? true : false;
+	}
+
+	private boolean isSignBit(short value) {
+		return value < 0 ? false : true;
 	}
 
 }

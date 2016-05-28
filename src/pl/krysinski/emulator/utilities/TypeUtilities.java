@@ -1,12 +1,20 @@
 package pl.krysinski.emulator.utilities;
 
 public class TypeUtilities {
-	public static int asByte(int value) {
+	public static int intAsByte(int value) {
 		return (value &= 0xff);
 	}
 
-	public static int asShort(int value) {
+	public static int intAsShort(int value) {
 		return (value &= 0xffff);
+	}
+	
+	public static short byteAsShort(byte value) {
+		short v = 0;
+		v = (short) (value & 0xff);
+		v = (short) (v & 0x00ff);
+		
+		return v;
 	}
 
 	public static short getNNNShort(short value) {

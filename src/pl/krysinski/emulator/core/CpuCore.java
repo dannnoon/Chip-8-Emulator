@@ -3,15 +3,13 @@ package pl.krysinski.emulator.core;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Random;
 import java.awt.*;
-
-import com.sun.glass.ui.CommonDialogs.Type;
 
 import pl.krysinski.emulator.constants.MemoryConstants;
 import pl.krysinski.emulator.constants.RegistersConstants;
 import pl.krysinski.emulator.constants.StackConstants;
 import pl.krysinski.emulator.utilities.TypeUtilities;
-import sun.awt.WindowIDProvider;
 
 public class CpuCore {
 	private static final int GRAPHICS_WIDTH = 64;
@@ -60,9 +58,8 @@ public class CpuCore {
 		if (file.exists()) {
 			try (FileInputStream fis = new FileInputStream(file)) {
 				byte[] data = new byte[MemoryConstants.MEMORY_PROGRAM_MAX_SIZE];
-				int n = 0;
 
-				while ((n = fis.read(data)) != -1)
+				while (fis.read(data) != -1)
 					;
 
 				memory.save(MemoryConstants.MEMORY_PROGRAM_COUNTER_OFFSET, data);
@@ -167,6 +164,26 @@ public class CpuCore {
 				shiftVXByOneToTheLeft();
 				break;
 			}
+			break;
+
+		case 0x9:
+			skipNextInstructionIfVXNotEqualsVY();
+			break;
+
+		case 0xA:
+			setIndexRegisterToNNN();
+			break;
+
+		case 0xB:
+			jumpToAddressNNNPlusV0();
+			break;
+
+		case 0xC:
+			setVXToRandomNumberANDNN();
+			break;
+
+		case 0xD:
+			drawSpriteAtVXVYWithNRows();
 			break;
 		}
 	}
@@ -351,19 +368,37 @@ public class CpuCore {
 	}
 
 	private void skipNextInstructionIfVXNotEqualsVY() {
+		byte x = TypeUtilities.getXByte(opcode);
+		byte y = TypeUtilities.getYByte(opcode);
 
+		if (registers.load(x) != registers.load(y)) {
+			skipInstruction();
+		}
 	}
 
 	private void setIndexRegisterToNNN() {
+		short NNN = TypeUtilities.getNNNShort(opcode);
+		indexRegister = NNN;
 
+		nextInstruction();
 	}
 
 	private void jumpToAddressNNNPlusV0() {
+		short NNN = TypeUtilities.getNNNShort(opcode);
 
+		programCounter = (short) (NNN + registers.load(0x0));
 	}
 
 	private void setVXToRandomNumberANDNN() {
+		byte NN = TypeUtilities.getNNByte(opcode);
+		byte x = TypeUtilities.getXByte(opcode);
 
+		Random random = new Random();
+		byte number = (byte) (random.nextInt() & NN);
+
+		registers.save(x, number);
+
+		nextInstruction();
 	}
 
 	private void drawSpriteAtVXVYWithNRows() {
@@ -379,28 +414,27 @@ public class CpuCore {
 
 		int jj = 0;
 		int ii;
-		
+
 		registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 0);
 
 		for (int j = posY; (j < (posY + N) % GRAPHICS_HEIGTH)
 				|| (j + 1 < (posY + N) % GRAPHICS_HEIGTH); j = (j + 1) % GRAPHICS_HEIGTH) {
 			ii = 7;
-			
+
 			for (int i = posX; (i < (posX + SPRITE_WIDTH) % GRAPHICS_WIDTH)
 					|| (i + 1 < (posX + SPRITE_WIDTH) % GRAPHICS_WIDTH); i = (i + 1) % GRAPHICS_WIDTH) {
 				byte tmp = (byte) ((sprite[jj] >>> ii) & 0x1);
-				
+
 				if (tmp == 1) {
 					registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 1);
+					graphics[j][i] ^= tmp;
 				}
-				
-				graphics[j][i] ^= tmp;
 
 				ii--;
 			}
 			jj++;
 		}
-		
+
 		drawFlag = true;
 
 		nextInstruction();

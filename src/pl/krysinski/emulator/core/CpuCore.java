@@ -3,6 +3,7 @@ package pl.krysinski.emulator.core;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.awt.*;
 
 import com.sun.glass.ui.CommonDialogs.Type;
 
@@ -10,14 +11,17 @@ import pl.krysinski.emulator.constants.MemoryConstants;
 import pl.krysinski.emulator.constants.RegistersConstants;
 import pl.krysinski.emulator.constants.StackConstants;
 import pl.krysinski.emulator.utilities.TypeUtilities;
+import sun.awt.WindowIDProvider;
 
 public class CpuCore {
 	private static final int GRAPHICS_WIDTH = 64;
 	private static final int GRAPHICS_HEIGTH = 32;
+	private static final int SPRITE_WIDTH = 8;
 
 	private Memory memory;
 	private Memory registers;
-	private Memory graphics;
+
+	private byte[][] graphics;
 
 	private Stack stack;
 
@@ -38,7 +42,7 @@ public class CpuCore {
 	private void initializeCpuCore() {
 		memory = new Memory(MemoryConstants.MEMORY_SIZE);
 		registers = new Memory(RegistersConstants.REGISTERS_SIZE);
-		graphics = new Memory(GRAPHICS_WIDTH * GRAPHICS_HEIGTH);
+		graphics = new byte[GRAPHICS_HEIGTH][GRAPHICS_WIDTH];
 
 		stack = new Stack(StackConstants.STACK_SIZE);
 
@@ -78,7 +82,7 @@ public class CpuCore {
 			delayTimer--;
 
 		if (soundTimer > 0) {
-			// beep
+			Toolkit.getDefaultToolkit().beep();
 			soundTimer--;
 		}
 	}
@@ -168,7 +172,7 @@ public class CpuCore {
 	}
 
 	private void clearScreen() {
-		graphics.clear();
+		clearGraphics();
 		drawFlag = true;
 
 		nextInstruction();
@@ -346,12 +350,75 @@ public class CpuCore {
 		nextInstruction();
 	}
 
+	private void skipNextInstructionIfVXNotEqualsVY() {
+
+	}
+
+	private void setIndexRegisterToNNN() {
+
+	}
+
+	private void jumpToAddressNNNPlusV0() {
+
+	}
+
+	private void setVXToRandomNumberANDNN() {
+
+	}
+
+	private void drawSpriteAtVXVYWithNRows() {
+		byte x = TypeUtilities.getXByte(opcode);
+		byte y = TypeUtilities.getYByte(opcode);
+		byte N = TypeUtilities.getNByte(opcode);
+
+		byte posX = registers.load(x);
+		byte posY = registers.load(y);
+
+		byte[] sprite = new byte[N];
+		sprite = memory.load(indexRegister, N);
+
+		int jj = 0;
+		int ii;
+		
+		registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 0);
+
+		for (int j = posY; (j < (posY + N) % GRAPHICS_HEIGTH)
+				|| (j + 1 < (posY + N) % GRAPHICS_HEIGTH); j = (j + 1) % GRAPHICS_HEIGTH) {
+			ii = 7;
+			
+			for (int i = posX; (i < (posX + SPRITE_WIDTH) % GRAPHICS_WIDTH)
+					|| (i + 1 < (posX + SPRITE_WIDTH) % GRAPHICS_WIDTH); i = (i + 1) % GRAPHICS_WIDTH) {
+				byte tmp = (byte) ((sprite[jj] >>> ii) & 0x1);
+				
+				if (tmp == 1) {
+					registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 1);
+				}
+				
+				graphics[j][i] ^= tmp;
+
+				ii--;
+			}
+			jj++;
+		}
+		
+		drawFlag = true;
+
+		nextInstruction();
+	}
+
 	public void drawGraphics() {
 		if (drawFlag) {
 			// draw
 		}
 
 		drawFlag = false;
+	}
+
+	private void clearGraphics() {
+		for (int i = 0; i < GRAPHICS_HEIGTH; i++) {
+			for (int j = 0; j < GRAPHICS_WIDTH; j++)
+				graphics[i][j] = 0x0;
+		}
 	}
 
 	private void nextInstruction() {

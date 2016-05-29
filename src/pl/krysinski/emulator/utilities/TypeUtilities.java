@@ -16,6 +16,14 @@ public class TypeUtilities {
 		
 		return v;
 	}
+	
+	public static int byteAsInt(byte value) {
+		int v = 0;
+		v = value & 0xff;
+		v = v & 0x000000ff;
+		
+		return v;
+	}
 
 	public static short getNNNShort(short value) {
 		return (short) (value & 0x0FFF);

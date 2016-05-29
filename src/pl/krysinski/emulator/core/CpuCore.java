@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.Random;
 import java.awt.*;
 
+import pl.krysinski.emulator.constants.Fontset;
 import pl.krysinski.emulator.constants.MemoryConstants;
 import pl.krysinski.emulator.constants.RegistersConstants;
 import pl.krysinski.emulator.constants.StackConstants;
@@ -50,6 +51,14 @@ public class CpuCore {
 
 		delayTimer = 0x000;
 		soundTimer = 0x000;
+
+		loadFontsetIntoMemory(Fontset.DEFAULT_FONTSET);
+	}
+
+	private void loadFontsetIntoMemory(int type) {
+		byte[] fontset = Fontset.getFontset(type);
+
+		memory.save(MemoryConstants.DEFAULT_FONT_MEMORY_OFFSET, fontset);
 	}
 
 	public void loadProgram(String path) {

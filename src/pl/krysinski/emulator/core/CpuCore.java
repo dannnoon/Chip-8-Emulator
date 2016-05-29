@@ -7,6 +7,7 @@ import java.util.Random;
 import java.awt.*;
 
 import pl.krysinski.emulator.constants.Fontset;
+import pl.krysinski.emulator.constants.KeyConstants;
 import pl.krysinski.emulator.constants.MemoryConstants;
 import pl.krysinski.emulator.constants.RegistersConstants;
 import pl.krysinski.emulator.constants.StackConstants;
@@ -21,6 +22,9 @@ public class CpuCore {
 	private Memory registers;
 
 	private byte[][] graphics;
+
+	private boolean[] tmpKeys;
+	private boolean[] keys;
 
 	private Stack stack;
 
@@ -41,7 +45,11 @@ public class CpuCore {
 	private void initializeCpuCore() {
 		memory = new Memory(MemoryConstants.MEMORY_SIZE);
 		registers = new Memory(RegistersConstants.REGISTERS_SIZE);
+
 		graphics = new byte[GRAPHICS_HEIGTH][GRAPHICS_WIDTH];
+
+		keys = new boolean[KeyConstants.KeyCodes.length];
+		tmpKeys = new boolean[KeyConstants.KeyCodes.length];
 
 		stack = new Stack(StackConstants.STACK_SIZE);
 
@@ -95,6 +103,8 @@ public class CpuCore {
 
 	public void switchState() {
 		byte stateA = (byte) ((opcode >>> 12) & 0xF);
+		byte stateC = TypeUtilities.getYByte(opcode);
+		byte stateD = TypeUtilities.getNByte(opcode);
 
 		switch (stateA) {
 		case 0x0:
@@ -134,7 +144,6 @@ public class CpuCore {
 			break;
 
 		case 0x8:
-			byte stateD = TypeUtilities.getNByte(opcode);
 
 			switch (stateD) {
 			case 0x0:
@@ -193,6 +202,17 @@ public class CpuCore {
 
 		case 0xD:
 			drawSpriteAtVXVYWithNRows();
+			break;
+
+		case 0xE:
+			if (stateC == 0x9 && stateD == 0xE)
+				skipInstructionIfVXKeyPressed();
+			else if (stateC == 0xA && stateD == 0x1)
+				skipInstructionIfVXKeyNotPressed();
+			break;
+
+		case 0xF:
+
 			break;
 		}
 	}
@@ -456,12 +476,88 @@ public class CpuCore {
 		nextInstruction();
 	}
 
+	private void skipInstructionIfVXKeyPressed() {
+		byte x = TypeUtilities.getXByte(opcode);
+
+		if (keys[registers.load(x)])
+			skipInstruction();
+		else
+			nextInstruction();
+	}
+
+	private void skipInstructionIfVXKeyNotPressed() {
+		byte x = TypeUtilities.getXByte(opcode);
+
+		if (!keys[registers.load(x)])
+			skipInstruction();
+		else
+			nextInstruction();
+	}
+
+	private void setVXToDelayTime() {
+		byte x = TypeUtilities.getXByte(opcode);
+
+		registers.save(x, delayTimer);
+		
+		nextInstruction();
+	}
+
+	private void setVXByKeyPress() {
+		boolean isKeyPressed = false;
+
+		for (int i = 0; i < keys.length; i++)
+			if (keys[i] == true) {
+				byte x = TypeUtilities.getXByte(opcode);
+
+				registers.save(x, (byte) i);
+
+				isKeyPressed = true;
+
+				nextInstruction();
+
+				break;
+			}
+	}
+
+	private void setDelayTimeToVX() {
+		byte x = TypeUtilities.getXByte(opcode);
+
+		delayTimer = registers.load(x);
+		
+		nextInstruction();
+	}
+
+	private void setSoundTimerToVX() {
+		byte x = TypeUtilities.getXByte(opcode);
+
+		soundTimer = registers.load(x);
+		
+		nextInstruction();
+	}
+
+	private void addVXToIndexRegister() {
+		byte x = TypeUtilities.getXByte(opcode);
+
+		indexRegister += registers.load(x);
+
+		if (isCarryBit(indexRegister)) {
+			indexRegister = (short) (indexRegister & 0xff);
+			registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 1);
+		} else {
+			registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 0);
+		}
+		
+		nextInstruction();
+	}
+	
+	
+
 	public void drawGraphics() {
 		if (drawFlag) {
 			// draw
-		}
 
-		drawFlag = false;
+			drawFlag = false;
+		}
 	}
 
 	private void clearGraphics() {
@@ -489,7 +585,15 @@ public class CpuCore {
 		return value < 0 ? false : true;
 	}
 
-	public void setKeys() {
-		
+	public void applyKeys() {
+		keys = tmpKeys;
+
+		for (int i = 0; i < tmpKeys.length; i++) {
+			tmpKeys[i] = false;
+		}
+	}
+
+	public void setKeys(int i) {
+		tmpKeys[i] = true;
 	}
 }

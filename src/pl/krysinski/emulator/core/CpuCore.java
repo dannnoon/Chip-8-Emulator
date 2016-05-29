@@ -52,7 +52,7 @@ public class CpuCore {
 		delayTimer = 0x000;
 		soundTimer = 0x000;
 
-		loadFontsetIntoMemory(Fontset.DEFAULT_FONTSET);
+		loadFontsetIntoMemory(Fontset.DEFAULT_FONTSET_ID);
 	}
 
 	private void loadFontsetIntoMemory(int type) {
@@ -489,4 +489,7 @@ public class CpuCore {
 		return value < 0 ? false : true;
 	}
 
+	public void setKeys() {
+		
+	}
 }

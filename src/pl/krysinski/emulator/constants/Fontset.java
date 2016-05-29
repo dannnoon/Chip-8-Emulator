@@ -1,11 +1,11 @@
 package pl.krysinski.emulator.constants;
 
 public class Fontset {
-	public static final int DEFAULT_FONTSET = 0;
 	public static final int DEFAULT_FONT_WIDTH = 4;
 	public static final int DEFAULT_FONT_HEIGTH = 5;
 	
-	public static final int CUSTOM_FULL_FONTSET = 1;
+	public static final int DEFAULT_FONTSET_ID = 0;
+	public static final int CUSTOM_FULL_FONTSET_ID = 1;
 
 	private static final byte[] defaultFontset = { 
 			0xF, 0x9, 0x9, 0x9, 0xF, // 0
@@ -55,9 +55,9 @@ public class Fontset {
 
 	public static byte[] getFontset(int id) {
 		switch (id) {
-		case CUSTOM_FULL_FONTSET:
+		case CUSTOM_FULL_FONTSET_ID:
 			return fixFontset(customFullFontset);
-		case DEFAULT_FONTSET:
+		case DEFAULT_FONTSET_ID:
 		default:
 			return fixFontset(defaultFontset);
 		}

@@ -204,7 +204,7 @@ public class CpuCore {
 	}
 
 	private void callSubroutineAtAddress() {
-		programCounter += 2;
+		nextInstruction();
 		stack.pop(programCounter);
 		jumpToAddress();
 	}
@@ -215,6 +215,8 @@ public class CpuCore {
 
 		if (registers.load(x) == NN)
 			skipInstruction();
+		else
+			nextInstruction();
 	}
 
 	private void skipNextInstrucionIfVXNotEqualsNN() {
@@ -223,6 +225,8 @@ public class CpuCore {
 
 		if (registers.load(x) != NN)
 			skipInstruction();
+		else
+			nextInstruction();
 	}
 
 	private void skipNextInstructionIfVXEqualsVY() {
@@ -231,6 +235,8 @@ public class CpuCore {
 
 		if (registers.load(x) == registers.load(y))
 			skipInstruction();
+		else
+			nextInstruction();
 	}
 
 	private void setVXToNN() {
@@ -371,9 +377,10 @@ public class CpuCore {
 		byte x = TypeUtilities.getXByte(opcode);
 		byte y = TypeUtilities.getYByte(opcode);
 
-		if (registers.load(x) != registers.load(y)) {
+		if (registers.load(x) != registers.load(y))
 			skipInstruction();
-		}
+		else
+			nextInstruction();
 	}
 
 	private void setIndexRegisterToNNN() {

@@ -1,5 +1,6 @@
 package gui;
 
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -28,7 +29,7 @@ public class EmulatorWindow extends JFrame implements KeyListener {
 	private static final int DEFAULT_WIDTH = 800;
 	private static final int DEFAULT_HEIGTH = 600;
 
-	private static final int DEFAULT_DELAY_TIME = 1000;
+	private static final int DEFAULT_DELAY_TIME = 5;
 
 	private short[] program;
 
@@ -75,6 +76,8 @@ public class EmulatorWindow extends JFrame implements KeyListener {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		setTitle(Strings.TITLE);
+		
+		setLayout(new BorderLayout());
 
 		frame = this;
 
@@ -326,6 +329,7 @@ public class EmulatorWindow extends JFrame implements KeyListener {
 		if (renderPanel == null) {
 			renderPanel = new RenderPanel();
 			frame.setContentPane(renderPanel);
+			frame.pack();
 		}
 
 		executeThread(new Runnable() {
@@ -336,6 +340,7 @@ public class EmulatorWindow extends JFrame implements KeyListener {
 					chip8.emulateCycle();
 
 					renderPanel.setGraphics((chip8.drawGraphics()));
+					renderPanel.repaint();
 
 					if (isKeyPressed) {
 						chip8.applyKeys();

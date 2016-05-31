@@ -21,7 +21,8 @@ public class RenderPanel extends JPanel {
 	byte[][] graphics;
 
 	public void setGraphics(byte[][] graph) {
-		graphics = graph;
+		if (graph != null)
+			graphics = graph;
 	}
 
 	@Override
@@ -30,7 +31,7 @@ public class RenderPanel extends JPanel {
 	}
 
 	@Override
-	protected void paintComponent(Graphics g) {
+	public void paint(Graphics g) {
 		super.paintComponent(g);
 
 		if (graphics != null) {
@@ -47,10 +48,10 @@ public class RenderPanel extends JPanel {
 					rect.x = PIXEL_WIDTH * j;
 					g2.fill(rect);
 				}
-				
+
 				rect.y = PIXEL_HEIGTH * i;
 			}
-			
+
 			g2.dispose();
 		}
 

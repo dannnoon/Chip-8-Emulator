@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Random;
+
+import jdk.nashorn.internal.runtime.regexp.RegExp;
+
 import java.awt.*;
 
 import pl.krysinski.emulator.constants.Fontset;
@@ -212,6 +215,25 @@ public class CpuCore {
 			break;
 
 		case 0xF:
+
+			if (stateC == 0x0 && stateD == 0x7)
+				setVXToDelayTime();
+			else if (stateC == 0x0 && stateD == 0xA)
+				setVXByKeyPress();
+			else if (stateC == 0x1 && stateD == 0x5)
+				setDelayTimeToVX();
+			else if (stateC == 0x1 && stateD == 0x8)
+				setSoundTimerToVX();
+			else if (stateC == 0x1 && stateD == 0xE)
+				addVXToIndexRegister();
+			else if (stateC == 0x2 && stateD == 0x9)
+				setIndexRegisterToVXCharacter();
+			else if (stateC == 0x3 && stateD == 0x3)
+				storeBinaryCodedDecimalVXInMemory();
+			else if (stateC == 0x5 && stateD == 0x5)
+				storeRegisterValueAtMemory();
+			else if (stateC == 0x6 && stateD == 0x5)
+				setRegistersToValueOfMemory();
 
 			break;
 		}
@@ -498,7 +520,7 @@ public class CpuCore {
 		byte x = TypeUtilities.getXByte(opcode);
 
 		registers.save(x, delayTimer);
-		
+
 		nextInstruction();
 	}
 
@@ -523,7 +545,7 @@ public class CpuCore {
 		byte x = TypeUtilities.getXByte(opcode);
 
 		delayTimer = registers.load(x);
-		
+
 		nextInstruction();
 	}
 
@@ -531,7 +553,7 @@ public class CpuCore {
 		byte x = TypeUtilities.getXByte(opcode);
 
 		soundTimer = registers.load(x);
-		
+
 		nextInstruction();
 	}
 
@@ -546,11 +568,45 @@ public class CpuCore {
 		} else {
 			registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 0);
 		}
-		
+
 		nextInstruction();
 	}
-	
-	
+
+	private void setIndexRegisterToVXCharacter() {
+		byte x = TypeUtilities.getXByte(opcode);
+
+		indexRegister = registers.loadTwoBytes(x);
+
+		nextInstruction();
+	}
+
+	private void storeBinaryCodedDecimalVXInMemory() {
+		byte x = TypeUtilities.getXByte(opcode);
+
+		memory.save(indexRegister, (byte) (registers.load(x) / 100));
+		memory.save(indexRegister + 1, (byte) ((registers.load(x) / 100) % 10));
+		memory.save(indexRegister + 2, (byte) ((registers.load(x) % 100) % 10));
+
+		nextInstruction();
+	}
+
+	private void storeRegisterValueAtMemory() {
+		byte x = TypeUtilities.getXByte(opcode);
+
+		for (int i = 0; i < x; i++)
+			memory.save(indexRegister + i, registers.load(i));
+
+		nextInstruction();
+	}
+
+	private void setRegistersToValueOfMemory() {
+		byte x = TypeUtilities.getXByte(opcode);
+
+		for (int i = 0; i < x; i++)
+			registers.save(i, memory.load(indexRegister + i));
+
+		nextInstruction();
+	}
 
 	public void drawGraphics() {
 		if (drawFlag) {

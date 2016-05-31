@@ -1,17 +1,16 @@
 package pl.krysinski.emulator.core;
 
 public class Memory {
-	private int memorySize;
 
 	private byte[] memory;
 
 	public Memory(int size) {
-		memory = new byte[memorySize];
+		memory = new byte[size];
 		clear();
 	}
 
 	public void clear() {
-		for (int i = 0; i < memorySize; i++) {
+		for (int i = 0; i < memory.length; i++) {
 			memory[i] = 0x00;
 		}
 	}
@@ -42,7 +41,10 @@ public class Memory {
 	public short loadTwoBytes(int offset) {
 		short value = 0;
 		
-		value = (short) ((load(offset) << 8) | load(offset + 1));
+		value = (short) (((load(offset) << 8) | (load(offset + 1) & 0xff)));
+		
+		System.out.printf("\nMemory - loadTwoBytes(%d)\nValue At %d: %04x\tValue At %d: %04x\tValue After Merging: %04x\tValue as int: %04x\tValue as int: %04x\n\n", 
+				offset, offset, load(offset), offset + 1, load(offset + 1), value, (load(offset) << 8), (short) load(offset + 1));
 		
 		return value;
 	}

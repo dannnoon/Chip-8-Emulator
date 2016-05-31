@@ -17,9 +17,9 @@ import pl.krysinski.emulator.constants.StackConstants;
 import pl.krysinski.emulator.utilities.TypeUtilities;
 
 public class CpuCore {
-	private static final int GRAPHICS_WIDTH = 64;
-	private static final int GRAPHICS_HEIGTH = 32;
-	private static final int SPRITE_WIDTH = 8;
+	public static final int GRAPHICS_WIDTH = 64;
+	public static final int GRAPHICS_HEIGTH = 32;
+	public static final int SPRITE_WIDTH = 8;
 
 	private Memory memory;
 	private Memory registers;
@@ -69,6 +69,8 @@ public class CpuCore {
 	private void loadFontsetIntoMemory(int type) {
 		byte[] fontset = Fontset.getFontset(type);
 
+		System.out.printf("FONTSET SIZE: %d\n", fontset.length);
+
 		memory.save(MemoryConstants.DEFAULT_FONT_MEMORY_OFFSET, fontset);
 	}
 
@@ -105,9 +107,13 @@ public class CpuCore {
 	}
 
 	public void switchState() {
+		System.out.printf("Opcode: %04x\n", opcode);
+
 		byte stateA = (byte) ((opcode >>> 12) & 0xF);
 		byte stateC = TypeUtilities.getYByte(opcode);
 		byte stateD = TypeUtilities.getNByte(opcode);
+
+		System.out.printf("StateA: %04x | StateC: %04x | StateD: %04x\n---\n", stateA, stateC, stateD);
 
 		switch (stateA) {
 		case 0x0:
@@ -608,12 +614,16 @@ public class CpuCore {
 		nextInstruction();
 	}
 
-	public void drawGraphics() {
+	public byte[][] drawGraphics() {
 		if (drawFlag) {
 			// draw
 
 			drawFlag = false;
+
+			return graphics;
 		}
+
+		return null;
 	}
 
 	private void clearGraphics() {

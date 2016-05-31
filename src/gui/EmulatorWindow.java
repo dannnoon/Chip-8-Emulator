@@ -5,6 +5,11 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -22,8 +27,10 @@ public class EmulatorWindow extends JFrame implements KeyListener {
 
 	private static final int DEFAULT_WIDTH = 800;
 	private static final int DEFAULT_HEIGTH = 600;
-	
-	private static final int DEFAULT_DELAY_TIME = 100;
+
+	private static final int DEFAULT_DELAY_TIME = 1000;
+
+	private short[] program;
 
 	private JMenuBar menuBar;
 	private JFrame frame;
@@ -49,12 +56,16 @@ public class EmulatorWindow extends JFrame implements KeyListener {
 
 	private File programFile;
 
+	RenderPanel renderPanel;
+
 	private boolean isProgramLoaded = false;
 	private boolean isEmulationRunning = false;
 	private boolean isEmulationPaused = false;
 	private boolean isKeyPressed = false;
-	
+
 	private int delayTime;
+
+	private ThreadPoolExecutor executor;
 
 	public EmulatorWindow() {
 		setSize(DEFAULT_WIDTH, DEFAULT_HEIGTH);
@@ -69,8 +80,29 @@ public class EmulatorWindow extends JFrame implements KeyListener {
 
 		initializeComponents();
 		initializeVariables();
+
 	}
-	
+
+	private void initializeExecutor() {
+		int processors = Runtime.getRuntime().availableProcessors();
+		executor = new ThreadPoolExecutor(processors, processors + 2, 10, TimeUnit.SECONDS,
+				new LinkedBlockingQueue<>());
+	}
+
+	private void shutdownExecutor() {
+		executor.shutdownNow();
+		executor = null;
+	}
+
+	private boolean executeThread(Runnable runnable) {
+		if (executor != null) {
+			executor.execute(runnable);
+
+			return true;
+		} else
+			return false;
+	}
+
 	private void initializeVariables() {
 		setDelayTime(DEFAULT_DELAY_TIME);
 	}
@@ -118,14 +150,17 @@ public class EmulatorWindow extends JFrame implements KeyListener {
 		runMenu.add(emulateMenuItem);
 
 		stopEmulateMenuItem = new JMenuItem(Strings.RUN_MENU_ITEM_STOP_EMULATE);
+		stopEmulateMenuItem.addActionListener(onRunMenuStopEmulateClick());
 		runMenu.add(stopEmulateMenuItem);
 
 		runMenu.addSeparator();
 
 		resumeEmulateMenuItem = new JMenuItem(Strings.RUN_MENU_ITEM_RESUME_EMULATE);
+		resumeEmulateMenuItem.addActionListener(onRunMenuResumEmulateClick());
 		runMenu.add(resumeEmulateMenuItem);
 
 		pauseEmulateMenuItem = new JMenuItem(Strings.RUN_MENU_ITEM_PAUSE_EMULATE);
+		pauseEmulateMenuItem.addActionListener(onRunMenuPauseEmulateClick());
 		runMenu.add(pauseEmulateMenuItem);
 
 		menuBar.add(runMenu);
@@ -135,6 +170,7 @@ public class EmulatorWindow extends JFrame implements KeyListener {
 		editMenu = new JMenu(Strings.MENU_EDIT);
 
 		showCodeMenuItem = new JMenuItem(Strings.EDIT_MENU_ITEM_SHOW_CODE);
+		showCodeMenuItem.addActionListener(onEditMenuShowCodeClick());
 		editMenu.add(showCodeMenuItem);
 
 		menuBar.add(editMenu);
@@ -144,6 +180,25 @@ public class EmulatorWindow extends JFrame implements KeyListener {
 		helpMenu = new JMenu(Strings.MENU_HELP);
 
 		menuBar.add(helpMenu);
+	}
+
+	private ActionListener onEditMenuShowCodeClick() {
+		return new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String code = "";
+
+				for (int i = 0; i < program.length; i++) {
+					if (i % 16 != 0) {
+						code = String.format("%s %04x", code, program[i]);
+					} else
+						code = String.format("%s\n%04x", code, program[i]);
+				}
+
+				JOptionPane.showMessageDialog(getParent(), code);
+			}
+		};
 	}
 
 	private ActionListener onFileMenuNewClick() {
@@ -169,10 +224,30 @@ public class EmulatorWindow extends JFrame implements KeyListener {
 				if (result == fileChooser.APPROVE_OPTION) {
 					programFile = fileChooser.getSelectedFile();
 					isProgramLoaded = true;
+
+					loadProgramCode();
+
 					enableProgramLoadedOptions();
 				}
 			}
 		};
+	}
+
+	private void loadProgramCode() {
+		long position = 0;
+
+		try (RandomAccessFile raf = new RandomAccessFile(programFile, "r")) {
+			program = new short[(int) raf.length()];
+
+			while (position < raf.length() / 2) {
+				program[(int) position++] = raf.readShort();
+			}
+
+		} catch (IOException e) {
+			System.out.printf("Reading error at: %d", position);
+			e.printStackTrace();
+		}
+
 	}
 
 	private ActionListener onFileMenuCloseClick() {
@@ -193,6 +268,7 @@ public class EmulatorWindow extends JFrame implements KeyListener {
 			public void actionPerformed(ActionEvent e) {
 				if (!isEmulationRunning) {
 					isEmulationRunning = true;
+					isEmulationPaused = false;
 
 					updateButtons();
 
@@ -205,28 +281,77 @@ public class EmulatorWindow extends JFrame implements KeyListener {
 		};
 	}
 
+	private ActionListener onRunMenuStopEmulateClick() {
+		return new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				isEmulationRunning = false;
+				isEmulationPaused = false;
+
+				updateButtons();
+			}
+		};
+	}
+
+	private ActionListener onRunMenuPauseEmulateClick() {
+		return new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				isEmulationPaused = true;
+
+				updateButtons();
+			}
+		};
+	}
+
+	private ActionListener onRunMenuResumEmulateClick() {
+		return new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				isEmulationPaused = false;
+
+				updateButtons();
+
+				emulate();
+			}
+		};
+	}
+
 	private void emulate() {
-		new Runnable() {
+		initializeExecutor();
+
+		if (renderPanel == null) {
+			renderPanel = new RenderPanel();
+			frame.setContentPane(renderPanel);
+		}
+
+		executeThread(new Runnable() {
 
 			@Override
 			public void run() {
 				while (isEmulationRunning && !isEmulationPaused) {
 					chip8.emulateCycle();
-					chip8.drawGraphics();
+
+					renderPanel.setGraphics((chip8.drawGraphics()));
 
 					if (isKeyPressed) {
 						chip8.applyKeys();
 						isKeyPressed = false;
+						// TODO logs
 					}
 
 					try {
 						Thread.sleep(delayTime);
 					} catch (InterruptedException e) {
+						shutdownExecutor();
 						e.printStackTrace();
 					}
 				}
 			}
-		};
+		});
 	}
 
 	private void turnOffProgramLoadedOptions() {
@@ -301,11 +426,11 @@ public class EmulatorWindow extends JFrame implements KeyListener {
 			pauseEmulateMenuItem.setEnabled(false);
 		}
 	}
-	
+
 	public void setDelayTime(int delay) {
 		delayTime = delay;
 	}
-	
+
 	public int getDelayTime() {
 		return delayTime;
 	}

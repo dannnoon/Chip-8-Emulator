@@ -1,10 +1,14 @@
 package gui;
 
 import java.awt.BorderLayout;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -19,11 +23,13 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
+import com.sun.corba.se.impl.oa.poa.ActiveObjectMap.Key;
+
 import pl.krysinski.emulator.constants.KeyConstants;
 import pl.krysinski.emulator.constants.Strings;
 import pl.krysinski.emulator.core.CpuCore;
 
-public class EmulatorWindow extends JFrame implements KeyListener {
+public class EmulatorWindow extends JFrame {
 	private static final long serialVersionUID = -7408689545574276739L;
 
 	private static final int DEFAULT_WIDTH = 800;
@@ -76,8 +82,11 @@ public class EmulatorWindow extends JFrame implements KeyListener {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		setTitle(Strings.TITLE);
-		
+
 		setLayout(new BorderLayout());
+
+		KeyboardFocusManager keyboardManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		keyboardManager.addKeyEventDispatcher(KeyEventDispatcher);
 
 		frame = this;
 
@@ -351,6 +360,10 @@ public class EmulatorWindow extends JFrame implements KeyListener {
 					try {
 						Thread.sleep(delayTime);
 					} catch (InterruptedException e) {
+						isEmulationPaused = false;
+						isEmulationRunning = false;
+						updateButtons();
+
 						shutdownExecutor();
 						e.printStackTrace();
 					}
@@ -375,37 +388,41 @@ public class EmulatorWindow extends JFrame implements KeyListener {
 		}
 	}
 
-	@Override
-	public void keyPressed(KeyEvent e) {
-		switch (e.getKeyCode()) {
-		case KeyEvent.VK_ESCAPE:
-			isEmulationPaused = true;
-			updateButtons();
-			break;
-		}
+	private KeyEventDispatcher KeyEventDispatcher = new KeyEventDispatcher() {
 
-		if (isEmulationRunning) {
-			for (int i = 0; i < KeyConstants.KeyCodes.length; i++) {
-				if (e.getKeyCode() == KeyConstants.KeyCodes[i]) {
-					chip8.setKeys(i);
+		@Override
+		public boolean dispatchKeyEvent(KeyEvent e) {
+
+			switch (e.getID()) {
+			case KeyEvent.KEY_PRESSED:
+				switch (e.getKeyCode()) {
+				case KeyEvent.VK_SPACE:
+					if (isEmulationRunning && !isEmulationPaused) {
+						isEmulationPaused = true;
+					} else if (isEmulationRunning && isEmulationPaused) {
+						isEmulationPaused = false;
+						emulate();
+					}
+
+					if (isEmulationRunning && !isEmulationPaused) {
+						for (int i = 0; i < KeyConstants.KeyCodes.length; i++) {
+							if (e.getKeyCode() == KeyConstants.KeyCodes[i]) {
+								chip8.setKeys(i);
+								break;
+							}
+						}
+						isKeyPressed = true;
+					}
+
+					updateButtons();
 					break;
 				}
+				break;
 			}
-			isKeyPressed = true;
+
+			return false;
 		}
-	}
-
-	@Override
-	public void keyReleased(KeyEvent e) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void keyTyped(KeyEvent e) {
-		// TODO Auto-generated method stub
-
-	}
+	};
 
 	private void updateButtons() {
 		if (isEmulationPaused && isEmulationRunning) {
@@ -448,5 +465,4 @@ public class EmulatorWindow extends JFrame implements KeyListener {
 			}
 		});
 	}
-
 }

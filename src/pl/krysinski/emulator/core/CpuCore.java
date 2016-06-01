@@ -3,6 +3,7 @@ package pl.krysinski.emulator.core;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Random;
 
 import jdk.nashorn.internal.runtime.regexp.RegExp;
@@ -113,7 +114,8 @@ public class CpuCore {
 		byte stateC = TypeUtilities.getYByte(opcode);
 		byte stateD = TypeUtilities.getNByte(opcode);
 
-		System.out.printf("StateA: %04x | StateC: %04x | StateD: %04x\n---\n", stateA, stateC, stateD);
+		// System.out.printf("StateA: %04x | StateC: %04x | StateD:
+		// %04x\n---\n", stateA, stateC, stateD);
 
 		switch (stateA) {
 		case 0x0:
@@ -243,6 +245,8 @@ public class CpuCore {
 
 			break;
 		}
+
+		System.out.printf("\n---\n\n");
 	}
 
 	private void clearScreen() {
@@ -250,19 +254,28 @@ public class CpuCore {
 		drawFlag = true;
 
 		nextInstruction();
+
+		System.out.printf("clearScreen()");
 	}
 
 	private void returnFromSubroutine() {
 		programCounter = stack.pull();
+
+		System.out.printf("returnFromSubroutine() || programCounter = 0x%04x", programCounter);
 	}
 
 	private void jumpToAddress() {
 		programCounter = TypeUtilities.getNNNShort(opcode);
+
+		System.out.printf("jumpToAddress() || programCounter = 0x%04x", programCounter);
 	}
 
 	private void callSubroutineAtAddress() {
 		nextInstruction();
 		stack.pop(programCounter);
+
+		System.out.printf("callSubroutineAtAddress()\n");
+
 		jumpToAddress();
 	}
 
@@ -274,6 +287,9 @@ public class CpuCore {
 			skipInstruction();
 		else
 			nextInstruction();
+
+		System.out.printf("skipNextIntructionIfVXEqualsNN() || V[0x%04x] = 0x%04x\tNN = 0x%04x", x, registers.load(x),
+				NN);
 	}
 
 	private void skipNextInstrucionIfVXNotEqualsNN() {
@@ -284,6 +300,9 @@ public class CpuCore {
 			skipInstruction();
 		else
 			nextInstruction();
+
+		System.out.printf("skipNextInstrucionIfVXNotEqualsNN() || V[0x%04x] = 0x%04x\tNN = 0x%04x", x,
+				registers.load(x), NN);
 	}
 
 	private void skipNextInstructionIfVXEqualsVY() {
@@ -294,6 +313,9 @@ public class CpuCore {
 			skipInstruction();
 		else
 			nextInstruction();
+
+		System.out.printf("skipNextInstructionIfVXEqualsVY() || V[0x%04x] = 0x%04x\tVY = 0x%04x", x, registers.load(x),
+				registers.load(y));
 	}
 
 	private void setVXToNN() {
@@ -302,15 +324,22 @@ public class CpuCore {
 
 		registers.save(x, NN);
 		nextInstruction();
+
+		System.out.printf("setVXToNN() || V[0x%04x] = 0x%04x\tNN = 0x%04x", x, registers.load(x), NN);
 	}
 
 	private void addNNToVX() {
 		byte x = TypeUtilities.getXByte(opcode);
 		byte NN = TypeUtilities.getNNByte(opcode);
 
+		byte tmp = registers.load(x);
+
 		registers.save(x, (byte) (registers.load(x) + NN));
 
 		nextInstruction();
+
+		System.out.printf("addNNToVX() || V[0x%04x] = 0x%04x\tNN = 0x%04x\tResult = 0x%04x", x, tmp, NN,
+				registers.load(x));
 	}
 
 	private void setVXToVY() {
@@ -320,33 +349,50 @@ public class CpuCore {
 		registers.save(x, registers.load(y));
 
 		nextInstruction();
+
+		System.out.printf("setVXToVY() || V[0x%04x] = V[0x%04x] = 0x%04x", x, y, registers.load(x));
 	}
 
 	private void setVXToVXORVY() {
 		byte x = TypeUtilities.getXByte(opcode);
 		byte y = TypeUtilities.getYByte(opcode);
 
-		registers.save(x, (byte) (registers.load(x) | registers.load(y)));
+		byte tmp = registers.load(x);
+
+		registers.save(x, (byte) ((registers.load(x) | registers.load(y)) & 0xffff));
 
 		nextInstruction();
+
+		System.out.printf("setVXToVXORVY() || V[0x%04x] = 0x%04x\tV[0x%04x] = 0x%04x\tResult = 0x%04x", x, tmp, y,
+				registers.load(x), registers.load(x));
 	}
 
 	private void setVXToVXANDVY() {
 		byte x = TypeUtilities.getXByte(opcode);
 		byte y = TypeUtilities.getYByte(opcode);
 
+		byte tmp = registers.load(x);
+
 		registers.save(x, (byte) (registers.load(x) & registers.load(y)));
 
 		nextInstruction();
+
+		System.out.printf("setVXToVXANDVY() || V[0x%04x] = 0x%04x\tV[0x%04x] = 0x%04x\tResult = 0x%04x", x, tmp, y,
+				registers.load(x), registers.load(x));
 	}
 
 	private void setVXToVXXORVY() {
 		byte x = TypeUtilities.getXByte(opcode);
 		byte y = TypeUtilities.getYByte(opcode);
 
+		byte tmp = registers.load(x);
+
 		registers.save(x, (byte) (registers.load(x) ^ registers.load(y)));
 
 		nextInstruction();
+
+		System.out.printf("setVXToVXXORVY() || V[0x%04x] = 0x%04x\tV[0x%04x] = 0x%04x\tResult = 0x%04x", x, tmp, y,
+				registers.load(x), registers.load(x));
 	}
 
 	private void addVYtoVX() {
@@ -366,6 +412,9 @@ public class CpuCore {
 			registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 0);
 
 		nextInstruction();
+
+		System.out.printf("addVYtoVX() || V[0x%04x] = 0x%04x\tV[0x%04x] = 0x%04x\tResult = 0x%04x\tisCarryBit = %b", x,
+				registers.load(x), y, registers.load(y), result, isCarryBit(result));
 	}
 
 	private void subtractVYfromVX() {
@@ -385,6 +434,10 @@ public class CpuCore {
 			registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 1);
 
 		nextInstruction();
+
+		System.out.printf(
+				"subtractVYfromVX() || V[0x%04x] = 0x%04x\tV[0x%04x] = 0x%04x\tResult = 0x%04x\tisCarryBit = %b", x,
+				registers.load(x), y, registers.load(y), result, isCarryBit(result));
 	}
 
 	private void shiftVXByOneToTheRight() {
@@ -445,6 +498,8 @@ public class CpuCore {
 		indexRegister = NNN;
 
 		nextInstruction();
+
+		System.out.printf("setIndexRegisterToNNN() || indexResgister = 0x%04x", indexRegister);
 	}
 
 	private void jumpToAddressNNNPlusV0() {
@@ -470,8 +525,10 @@ public class CpuCore {
 		byte y = TypeUtilities.getYByte(opcode);
 		byte N = TypeUtilities.getNByte(opcode);
 
-		byte posX = registers.load(x);
-		byte posY = registers.load(y);
+		byte[][] graphicsCopy = graphics;
+
+		byte posX = (byte) (registers.load(x) % GRAPHICS_WIDTH);
+		byte posY = (byte) (registers.load(y) % GRAPHICS_HEIGTH);
 
 		byte[] sprite = new byte[N];
 		sprite = memory.load(indexRegister, N);
@@ -481,21 +538,31 @@ public class CpuCore {
 
 		registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 0);
 
-		for (int j = posY; (j < (posY + N) % GRAPHICS_HEIGTH)
-				|| (j + 1 < (posY + N) % GRAPHICS_HEIGTH); j = (j + 1) % GRAPHICS_HEIGTH) {
+		System.out.printf(
+				"drawSpriteAtVXVYWithNRows() || V[0x%04x] = 0x%04x\tV[0x%04x] = 0x%04x\tRows = 0x%04x\tAt[0x%04x|0x%04x]\tMemory position = 0x%04x",
+				x, registers.load(x), y, registers.load(y), N, posX, posY, indexRegister);
+
+		for (int j = posY; jj < N; j = (j + 1) % GRAPHICS_HEIGTH) {
 			ii = 7;
 
-			for (int i = posX; (i < (posX + SPRITE_WIDTH) % GRAPHICS_WIDTH)
-					|| (i + 1 < (posX + SPRITE_WIDTH) % GRAPHICS_WIDTH); i = (i + 1) % GRAPHICS_WIDTH) {
+			System.out.printf("\n");
+
+			for (int i = posX; ii >= 0; i = (i + 1) % GRAPHICS_WIDTH) {
 				byte tmp = (byte) ((sprite[jj] >>> ii) & 0x1);
 
 				if (tmp == 1) {
-					registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 1);
+
+					if (graphics[j][i] == 1)
+						registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 1);
+
 					graphics[j][i] ^= tmp;
-				}
+					System.out.printf("X");
+				} else
+					System.out.printf(" ");
 
 				ii--;
 			}
+			ii = 7;
 			jj++;
 		}
 

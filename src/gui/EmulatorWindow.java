@@ -1,14 +1,12 @@
 package gui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -23,8 +21,6 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
-import com.sun.corba.se.impl.oa.poa.ActiveObjectMap.Key;
-
 import pl.krysinski.emulator.constants.KeyConstants;
 import pl.krysinski.emulator.constants.Strings;
 import pl.krysinski.emulator.core.CpuCore;
@@ -35,7 +31,7 @@ public class EmulatorWindow extends JFrame {
 	private static final int DEFAULT_WIDTH = 800;
 	private static final int DEFAULT_HEIGTH = 600;
 
-	private static final int DEFAULT_DELAY_TIME = 5;
+	private static final int DEFAULT_DELAY_TIME = 3;
 
 	private short[] program;
 
@@ -76,6 +72,8 @@ public class EmulatorWindow extends JFrame {
 
 	public EmulatorWindow() {
 		setSize(DEFAULT_WIDTH, DEFAULT_HEIGTH);
+		
+		getContentPane().setBackground(Color.BLACK);
 
 		setVisible(true);
 
@@ -199,16 +197,18 @@ public class EmulatorWindow extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				String code = "";
+//				String code = "";
+//
+//				for (int i = 0; i < program.length; i++) {
+//					if (i % 16 != 0) {
+//						code = String.format("%s %04x", code, program[i]);
+//					} else
+//						code = String.format("%s\n%04x", code, program[i]);
+//				}
 
-				for (int i = 0; i < program.length; i++) {
-					if (i % 16 != 0) {
-						code = String.format("%s %04x", code, program[i]);
-					} else
-						code = String.format("%s\n%04x", code, program[i]);
-				}
-
-				JOptionPane.showMessageDialog(getParent(), code);
+				//JOptionPane.showMessageDialog(getParent(), code);
+				
+				new CodePanel(program).showDialog(getParent());
 			}
 		};
 	}
@@ -229,15 +229,17 @@ public class EmulatorWindow extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				fileChooser = new JFileChooser();
-				// fileChooser.addChoosableFileFilter(new
-				// FileNameExtensionFilter("Chip-8 program", "c8"));
 
 				int result = fileChooser.showOpenDialog(getParent());
-				if (result == fileChooser.APPROVE_OPTION) {
+				if (result == JFileChooser.APPROVE_OPTION) {
 					programFile = fileChooser.getSelectedFile();
 					isProgramLoaded = true;
 
 					loadProgramCode();
+					
+					isEmulationPaused = false;
+					isEmulationRunning = false;
+					updateButtons();
 
 					enableProgramLoadedOptions();
 				}
@@ -268,6 +270,9 @@ public class EmulatorWindow extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				isProgramLoaded = false;
+				isEmulationRunning = false;
+				isEmulationPaused = false;
+				updateButtons();
 				turnOffProgramLoadedOptions();
 			}
 		};
@@ -354,7 +359,6 @@ public class EmulatorWindow extends JFrame {
 					if (isKeyPressed) {
 						chip8.applyKeys();
 						isKeyPressed = false;
-						// TODO logs
 					}
 
 					try {
@@ -403,20 +407,21 @@ public class EmulatorWindow extends JFrame {
 						isEmulationPaused = false;
 						emulate();
 					}
-
-					if (isEmulationRunning && !isEmulationPaused) {
-						for (int i = 0; i < KeyConstants.KeyCodes.length; i++) {
-							if (e.getKeyCode() == KeyConstants.KeyCodes[i]) {
-								chip8.setKeys(i);
-								break;
-							}
-						}
-						isKeyPressed = true;
-					}
-
 					updateButtons();
 					break;
 				}
+				
+				if (isEmulationRunning && isEmulationPaused) {
+					for (int i = 0; i < KeyConstants.KeyCodes.length; i++) {
+						if (e.getKeyCode() == KeyConstants.KeyCodes[i]) {
+							System.out.printf("\n----------\nKeyCode = %d\n----------\n", e.getKeyCode());
+							chip8.setKeys(i);
+							break;
+						}
+					}
+					isKeyPressed = true;
+				}
+				
 				break;
 			}
 
@@ -461,6 +466,7 @@ public class EmulatorWindow extends JFrame {
 		java.awt.EventQueue.invokeLater(new Runnable() {
 			@Override
 			public void run() {
+				@SuppressWarnings("unused")
 				EmulatorWindow emulatorWindow = new EmulatorWindow();
 			}
 		});

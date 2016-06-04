@@ -20,4 +20,6 @@ public class Strings {
 	public static final String MENU_HELP = "Help";
 	
 	public static final String DIALOG_MESSAGE_OPTION_UNAVAILABLE = "Option is unavailable.";
+	
+	public static final String DIALOG_CLOSE_BUTTON = "Close";
 }

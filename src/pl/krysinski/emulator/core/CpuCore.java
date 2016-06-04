@@ -574,9 +574,10 @@ public class CpuCore {
 	private void skipInstructionIfVXKeyPressed() {
 		byte x = TypeUtilities.getXByte(opcode);
 
-		if (keys[registers.load(x)])
+		if (keys[registers.load(x)]) {
+			keys[registers.load(x)] = false;
 			skipInstruction();
-		else
+		} else
 			nextInstruction();
 	}
 
@@ -609,6 +610,8 @@ public class CpuCore {
 				isKeyPressed = true;
 
 				nextInstruction();
+				
+				keys[i] = false;
 
 				break;
 			}

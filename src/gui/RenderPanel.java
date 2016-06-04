@@ -33,6 +33,8 @@ public class RenderPanel extends JPanel {
 		
 		graphics = new byte[CpuCore.GRAPHICS_HEIGTH][CpuCore.GRAPHICS_WIDTH];
 		
+		this.setBackground(Color.BLACK);
+		
 		this.repaint();
 		
 		this.addComponentListener(new ComponentAdapter() {
@@ -43,6 +45,8 @@ public class RenderPanel extends JPanel {
 				
 				int heigth = e.getComponent().getHeight();
 				int width = e.getComponent().getWidth();
+				
+				repaint();
 				
 //				if (width < heigth){
 					pixelWidth = width / CpuCore.GRAPHICS_WIDTH;

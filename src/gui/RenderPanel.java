@@ -19,43 +19,43 @@ public class RenderPanel extends JPanel {
 
 	public static final int DEFAULT_PIXEL_WIDTH = 10;
 	public static final int DEFAULT_PIXEL_HEIGTH = 10;
-	
+
 	private int pixelWidth;
 	private int pixelHeigth;
 
 	private Rectangle rect = new Rectangle(0, 0, DEFAULT_PIXEL_WIDTH, DEFAULT_PIXEL_HEIGTH);
 
 	byte[][] graphics;
-	
+
 	public RenderPanel() {
 		pixelWidth = DEFAULT_PIXEL_WIDTH;
 		pixelHeigth = DEFAULT_PIXEL_HEIGTH;
-		
+
 		graphics = new byte[CpuCore.GRAPHICS_HEIGTH][CpuCore.GRAPHICS_WIDTH];
-		
+
 		this.setBackground(Color.BLACK);
-		
+
 		this.repaint();
-		
+
 		this.addComponentListener(new ComponentAdapter() {
-			
+
 			@Override
 			public void componentResized(ComponentEvent e) {
 				super.componentResized(e);
-				
+
 				int heigth = e.getComponent().getHeight();
 				int width = e.getComponent().getWidth();
-				
+
 				repaint();
-				
-//				if (width < heigth){
-					pixelWidth = width / CpuCore.GRAPHICS_WIDTH;
-//					pixelHeigth = pixelWidth;
-//				}
-//				else {
-					pixelHeigth = heigth / CpuCore.GRAPHICS_HEIGTH;
-//					pixelWidth = pixelHeigth;
-//				}
+
+				// if (width < heigth){
+				pixelWidth = width / CpuCore.GRAPHICS_WIDTH;
+				// pixelHeigth = pixelWidth;
+				// }
+				// else {
+				pixelHeigth = heigth / CpuCore.GRAPHICS_HEIGTH;
+				// pixelWidth = pixelHeigth;
+				// }
 			}
 		});
 	}
@@ -65,9 +65,19 @@ public class RenderPanel extends JPanel {
 			graphics = graph;
 	}
 
+	public void clearGraphics() {
+		for (int i = 0; i < graphics.length; i++) {
+			for (int j = 0; j < graphics[i].length; j++) {
+				graphics[i][j] = 0;
+			}
+		}
+	}
+
 	@Override
 	public Dimension getPreferredSize() {
-		return new Dimension(pixelWidth * CpuCore.GRAPHICS_WIDTH, pixelHeigth * CpuCore.GRAPHICS_HEIGTH);
+		return getParent().getSize();
+		// return new Dimension(pixelWidth * CpuCore.GRAPHICS_WIDTH, pixelHeigth
+		// * CpuCore.GRAPHICS_HEIGTH);
 	}
 
 	@Override
@@ -77,7 +87,7 @@ public class RenderPanel extends JPanel {
 		if (graphics != null) {
 
 			Graphics2D g2 = (Graphics2D) g.create();
-			
+
 			rect.setSize(pixelWidth, pixelHeigth);
 
 			for (int i = 0; i < CpuCore.GRAPHICS_HEIGTH; i++) {

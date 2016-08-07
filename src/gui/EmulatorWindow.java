@@ -31,7 +31,7 @@ public class EmulatorWindow extends JFrame {
 	private static final int DEFAULT_WIDTH = 800;
 	private static final int DEFAULT_HEIGTH = 600;
 
-	private static final int DEFAULT_DELAY_TIME = 3;
+	private static final int DEFAULT_DELAY_TIME = 2;
 
 	private short[] program;
 
@@ -59,20 +59,18 @@ public class EmulatorWindow extends JFrame {
 
 	private File programFile;
 
-	RenderPanel renderPanel;
+	private RenderPanel renderPanel;
 
 	private boolean isProgramLoaded = false;
 	private boolean isEmulationRunning = false;
 	private boolean isEmulationPaused = false;
-	private boolean isKeyPressed = false;
-
 	private int delayTime;
 
 	private ThreadPoolExecutor executor;
 
 	public EmulatorWindow() {
 		setSize(DEFAULT_WIDTH, DEFAULT_HEIGTH);
-		
+
 		getContentPane().setBackground(Color.BLACK);
 
 		setVisible(true);
@@ -197,17 +195,17 @@ public class EmulatorWindow extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-//				String code = "";
-//
-//				for (int i = 0; i < program.length; i++) {
-//					if (i % 16 != 0) {
-//						code = String.format("%s %04x", code, program[i]);
-//					} else
-//						code = String.format("%s\n%04x", code, program[i]);
-//				}
+				// String code = "";
+				//
+				// for (int i = 0; i < program.length; i++) {
+				// if (i % 16 != 0) {
+				// code = String.format("%s %04x", code, program[i]);
+				// } else
+				// code = String.format("%s\n%04x", code, program[i]);
+				// }
 
-				//JOptionPane.showMessageDialog(getParent(), code);
-				
+				// JOptionPane.showMessageDialog(getParent(), code);
+
 				new CodePanel(program).showDialog(getParent());
 			}
 		};
@@ -236,7 +234,7 @@ public class EmulatorWindow extends JFrame {
 					isProgramLoaded = true;
 
 					loadProgramCode();
-					
+
 					isEmulationPaused = false;
 					isEmulationRunning = false;
 					updateButtons();
@@ -356,10 +354,9 @@ public class EmulatorWindow extends JFrame {
 					renderPanel.setGraphics((chip8.drawGraphics()));
 					renderPanel.repaint();
 
-					if (isKeyPressed) {
-						chip8.applyKeys();
-						isKeyPressed = false;
-					}
+					// if (isKeyPressed) {
+					// chip8.applyKeys();
+					// }
 
 					try {
 						Thread.sleep(delayTime);
@@ -410,18 +407,17 @@ public class EmulatorWindow extends JFrame {
 					updateButtons();
 					break;
 				}
-				
-				if (isEmulationRunning && isEmulationPaused) {
+
+				if (isEmulationRunning && !isEmulationPaused) {
 					for (int i = 0; i < KeyConstants.KeyCodes.length; i++) {
 						if (e.getKeyCode() == KeyConstants.KeyCodes[i]) {
-							System.out.printf("\n----------\nKeyCode = %d\n----------\n", e.getKeyCode());
 							chip8.setKeys(i);
+							System.out.printf("\n----------\nKeyCode = %d\n----------\n", e.getKeyCode());
 							break;
 						}
 					}
-					isKeyPressed = true;
 				}
-				
+
 				break;
 			}
 

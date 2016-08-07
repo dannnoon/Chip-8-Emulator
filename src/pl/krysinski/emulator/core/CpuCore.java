@@ -378,7 +378,7 @@ public class CpuCore {
 		nextInstruction();
 
 		System.out.printf("setVXToVXANDVY() || V[0x%04x] = 0x%04x\tV[0x%04x] = 0x%04x\tResult = 0x%04x", x, tmp, y,
-				registers.load(x), registers.load(x));
+				registers.load(y), registers.load(x));
 	}
 
 	private void setVXToVXXORVY() {
@@ -406,6 +406,8 @@ public class CpuCore {
 
 		result = (short) (xv + yv);
 
+		registers.save(x, (byte) result);
+
 		if (isCarryBit(result))
 			registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 1);
 		else
@@ -426,9 +428,13 @@ public class CpuCore {
 		short xv = TypeUtilities.byteAsShort(registers.load(x));
 		short yv = TypeUtilities.byteAsShort(registers.load(y));
 
-		result = (short) (xv - yv);
+		System.out.printf("xv = 0x%04x || yv = 0x%04x", xv, yv);
 
-		if (isSignBit(result))
+		result = (short) ((xv - yv) & 0x0fff);
+
+		registers.save(x, (byte) result);
+
+		if (xv < yv)
 			registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 0);
 		else
 			registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 1);
@@ -436,12 +442,14 @@ public class CpuCore {
 		nextInstruction();
 
 		System.out.printf(
-				"subtractVYfromVX() || V[0x%04x] = 0x%04x\tV[0x%04x] = 0x%04x\tResult = 0x%04x\tisCarryBit = %b", x,
-				registers.load(x), y, registers.load(y), result, isCarryBit(result));
+				"subtractVYfromVX() || V[0x%04x] = 0x%04x\tV[0x%04x] = 0x%04x\tResult = 0x%04x\tisBorrow = %b", x, xv,
+				y, yv, result, xv < yv);
 	}
 
 	private void shiftVXByOneToTheRight() {
 		byte x = TypeUtilities.getXByte(opcode);
+
+		byte tmp = registers.load(x);
 
 		byte leastBit = (byte) (registers.load(x) & 0x01);
 
@@ -450,6 +458,9 @@ public class CpuCore {
 		registers.save(x, (byte) (registers.load(x) >>> 1));
 
 		nextInstruction();
+
+		System.out.printf("shiftVXByOneToTheRight || V[0x%04x] = 0x%04x\tLeastBit = 0x%04x\tResult = 0x%04x", x, tmp,
+				leastBit, registers.load(x));
 	}
 
 	private void subtractVXfromVY() {
@@ -461,14 +472,20 @@ public class CpuCore {
 		short xv = TypeUtilities.byteAsShort(registers.load(x));
 		short yv = TypeUtilities.byteAsShort(registers.load(y));
 
-		result = (short) (yv - xv);
+		result = (short) ((yv - xv) & 0x0fff);
 
-		if (isSignBit(result))
+		registers.save(x, (byte) result);
+
+		if (xv < yv)
 			registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 0);
 		else
 			registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 1);
 
 		nextInstruction();
+
+		System.out.printf(
+				"subtractVXfromVY() || V[0x%04x] = 0x%04x\tV[0x%04x] = 0x%04x\tResult = 0x%04x\tisBorrow = %b", x, xv,
+				y, yv, result, xv < yv);
 	}
 
 	private void shiftVXByOneToTheLeft() {
@@ -476,11 +493,16 @@ public class CpuCore {
 
 		byte mostBit = (byte) ((registers.load(x) & 0x80) >> 7);
 
+		byte tmp = registers.load(x);
+
 		registers.save(RegistersConstants.REGISTER_CARRY_FLAG, mostBit);
 
 		registers.save(x, (byte) (registers.load(x) << 1));
 
 		nextInstruction();
+
+		System.out.printf("shiftVXByOneToTheRight || V[0x%04x] = 0x%04x\tLeastBit = 0x%04x\tResult = 0x%04x", x, tmp,
+				mostBit, registers.load(x));
 	}
 
 	private void skipNextInstructionIfVXNotEqualsVY() {
@@ -491,6 +513,9 @@ public class CpuCore {
 			skipInstruction();
 		else
 			nextInstruction();
+
+		System.out.printf("skipNextInstructionIfVXNotEqualsVY() || V[0x%04x] = 0x%04x\tV[0x%04x] = 0x%04x", x,
+				registers.load(x), y, registers.load(y));
 	}
 
 	private void setIndexRegisterToNNN() {
@@ -506,6 +531,9 @@ public class CpuCore {
 		short NNN = TypeUtilities.getNNNShort(opcode);
 
 		programCounter = (short) (NNN + registers.load(0x0));
+
+		System.out.printf("jumpToAddressNNNPlusV0() || NNN = 0x%04x\tV[0] = 0x%04x\tResult = 0x%04x", NNN,
+				registers.load(0), programCounter);
 	}
 
 	private void setVXToRandomNumberANDNN() {
@@ -513,11 +541,15 @@ public class CpuCore {
 		byte x = TypeUtilities.getXByte(opcode);
 
 		Random random = new Random();
-		byte number = (byte) (random.nextInt() & NN);
+		int randomN = random.nextInt();
+		byte number = (byte) (randomN & NN);
 
 		registers.save(x, number);
 
 		nextInstruction();
+
+		System.out.printf("setVXToRandomNumberANDNN() || NN = 0x%04x\tRandom number = 0x%04x\tResult = 0x%04x", NN,
+				randomN, registers.load(x));
 	}
 
 	private void drawSpriteAtVXVYWithNRows() {
@@ -579,6 +611,9 @@ public class CpuCore {
 			skipInstruction();
 		} else
 			nextInstruction();
+
+		System.out.printf("skipInstructionIfVXKeyPressed() || KeyCode = 0x%04x\tIs pressed = %b", registers.load(x),
+				keys[registers.load(x)]);
 	}
 
 	private void skipInstructionIfVXKeyNotPressed() {
@@ -586,8 +621,14 @@ public class CpuCore {
 
 		if (!keys[registers.load(x)])
 			skipInstruction();
-		else
+		else {
 			nextInstruction();
+		}
+
+		System.out.printf("skipInstructionIfVXKeyNotPressed() || KeyCode = 0x%04x\tIs pressed = %b", registers.load(x),
+				keys[registers.load(x)]);
+
+		keys[registers.load(x)] = false;
 	}
 
 	private void setVXToDelayTime() {
@@ -596,13 +637,15 @@ public class CpuCore {
 		registers.save(x, delayTimer);
 
 		nextInstruction();
+
+		System.out.printf("setVXToDelayTime() || Result = 0x%04x", registers.load(x));
 	}
 
 	private void setVXByKeyPress() {
 		boolean isKeyPressed = false;
 
 		for (int i = 0; i < keys.length; i++)
-			if (keys[i] == true) {
+			if (keys[i]) {
 				byte x = TypeUtilities.getXByte(opcode);
 
 				registers.save(x, (byte) i);
@@ -610,11 +653,17 @@ public class CpuCore {
 				isKeyPressed = true;
 
 				nextInstruction();
-				
+
+				System.out.printf("setVXByKeyPress() || KeyPressed = 0x%04x", i);
+
 				keys[i] = false;
 
 				break;
 			}
+
+		if (!isKeyPressed) {
+			System.out.printf("setVXByKeyPress() || None key was pressed");
+		}
 	}
 
 	private void setDelayTimeToVX() {
@@ -623,6 +672,8 @@ public class CpuCore {
 		delayTimer = registers.load(x);
 
 		nextInstruction();
+
+		System.out.printf("setDelayTimeToVX() || Result = 0x%04x", delayTimer);
 	}
 
 	private void setSoundTimerToVX() {
@@ -631,39 +682,57 @@ public class CpuCore {
 		soundTimer = registers.load(x);
 
 		nextInstruction();
+
+		System.out.printf("setSoundTimerToVX() || Result = 0x%04x", soundTimer);
 	}
 
 	private void addVXToIndexRegister() {
 		byte x = TypeUtilities.getXByte(opcode);
 
-		indexRegister += registers.load(x);
+		short reg = (short) (registers.load(x) & 0xff);
+
+		short tmp = indexRegister;
+
+		indexRegister += reg;
 
 		if (isCarryBit(indexRegister)) {
-			indexRegister = (short) (indexRegister & 0xff);
+			indexRegister = (short) (indexRegister & 0xffff);
 			registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 1);
 		} else {
 			registers.save(RegistersConstants.REGISTER_CARRY_FLAG, (byte) 0);
 		}
 
 		nextInstruction();
+
+		System.out.printf(
+				"addVXToIndexRegister() || V[0x%04x] = 0x%04x\tIndexRegister = 0x%04x\tResult = 0x%04x\tisCarryBit = %b",
+				x, registers.load(x), tmp, indexRegister, isCarryBit(indexRegister));
 	}
 
 	private void setIndexRegisterToVXCharacter() {
 		byte x = TypeUtilities.getXByte(opcode);
 
-		indexRegister = registers.loadTwoBytes(x);
+		indexRegister = (short) (registers.load(x) * Fontset.DEFAULT_FONT_HEIGTH);
 
 		nextInstruction();
+
+		System.out.printf("setIndexRegisterToVXCharacter() || indexRegister = 0x%04x", indexRegister);
 	}
 
 	private void storeBinaryCodedDecimalVXInMemory() {
 		byte x = TypeUtilities.getXByte(opcode);
 
 		memory.save(indexRegister, (byte) (registers.load(x) / 100));
-		memory.save(indexRegister + 1, (byte) ((registers.load(x) / 100) % 10));
+		memory.save(indexRegister + 1, (byte) ((registers.load(x) / 10) % 10));
 		memory.save(indexRegister + 2, (byte) ((registers.load(x) % 100) % 10));
 
 		nextInstruction();
+
+		System.out.printf(
+				"storeBinaryCodedDecimalVXInMemory() || V[0x%04x] = 0x%04x\tmemory[0x%04x] = 0x%04x"
+						+ "\tmemory[0x%04x] = 0x%04x\tmemory[0x%04x] = 0x%04x",
+				x, registers.load(x), indexRegister, memory.load(indexRegister), indexRegister + 1,
+				memory.load(indexRegister + 1), indexRegister + 2, memory.load(indexRegister + 2));
 	}
 
 	private void storeRegisterValueAtMemory() {
@@ -673,6 +742,8 @@ public class CpuCore {
 			memory.save(indexRegister + i, registers.load(i));
 
 		nextInstruction();
+
+		System.out.printf("storeRegisterValueAtMemory()");
 	}
 
 	private void setRegistersToValueOfMemory() {
@@ -682,6 +753,8 @@ public class CpuCore {
 			registers.save(i, memory.load(indexRegister + i));
 
 		nextInstruction();
+
+		System.out.printf("setRegistersToValueOfMemory()");
 	}
 
 	public byte[][] drawGraphics() {
@@ -712,7 +785,7 @@ public class CpuCore {
 	}
 
 	private boolean isCarryBit(short value) {
-		short carryBit = (short) ((value >>> 8) & 0x0001);
+		short carryBit = (short) ((value >>> 15) & 0x0001);
 
 		return carryBit == 1 ? true : false;
 	}
@@ -721,15 +794,15 @@ public class CpuCore {
 		return value < 0 ? false : true;
 	}
 
-	public void applyKeys() {
-		keys = tmpKeys;
-
-		for (int i = 0; i < tmpKeys.length; i++) {
-			tmpKeys[i] = false;
-		}
-	}
+	// public void applyKeys() {
+	// keys = tmpKeys;
+	//
+	// for (int i = 0; i < tmpKeys.length; i++) {
+	// tmpKeys[i] = false;
+	// }
+	// }
 
 	public void setKeys(int i) {
-		tmpKeys[i] = true;
+		keys[i] = true;
 	}
 }

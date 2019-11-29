@@ -1,4 +1,4 @@
-package gui;
+package pl.krysinski.chip8.presentation;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -7,12 +7,10 @@ import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 
 import javax.swing.JPanel;
 
-import pl.krysinski.emulator.core.CpuCore;
+import pl.krysinski.chip8.domain.core.CpuCore;
 
 public class RenderPanel extends JPanel {
 	private static final long serialVersionUID = 2341217297217180510L;

@@ -1,9 +1,11 @@
-package gui;
+package pl.krysinski.chip8.presentation;
 
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
 public class PropertiesPanel extends JPanel {
+
+	private static final long serialVersionUID = 1122556309859441652L;
 
 	private static final String TITLE = "Properties";
 
@@ -25,10 +27,9 @@ public class PropertiesPanel extends JPanel {
 
 		propertiesTabPane.addTab(TAB_TITLE_EMULATION, emulationTab);
 	}
-	
+
 	private void initializeEmulationTab() {
 		emulationTab = new JPanel();
-		
-		
+
 	}
 }

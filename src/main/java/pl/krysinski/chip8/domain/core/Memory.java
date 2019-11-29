@@ -1,4 +1,4 @@
-package pl.krysinski.emulator.core;
+package pl.krysinski.chip8.domain.core;
 
 public class Memory {
 
@@ -37,15 +37,18 @@ public class Memory {
 
 		return data;
 	}
-	
+
 	public short loadTwoBytes(int offset) {
 		short value = 0;
-		
+
 		value = (short) (((load(offset) << 8) | (load(offset + 1) & 0xff)));
-		
-		//System.out.printf("\nMemory - loadTwoBytes(%d)\nValue At %d: %04x\tValue At %d: %04x\tValue After Merging: %04x\tValue as int: %04x\tValue as int: %04x\n\n", 
-		//		offset, offset, load(offset), offset + 1, load(offset + 1), value, (load(offset) << 8), (short) load(offset + 1));
-		
+
+		// System.out.printf("\nMemory - loadTwoBytes(%d)\nValue At %d: %04x\tValue At
+		// %d: %04x\tValue After Merging: %04x\tValue as int: %04x\tValue as int:
+		// %04x\n\n",
+		// offset, offset, load(offset), offset + 1, load(offset + 1), value,
+		// (load(offset) << 8), (short) load(offset + 1));
+
 		return value;
 	}
 }

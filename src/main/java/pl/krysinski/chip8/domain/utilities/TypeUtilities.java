@@ -1,4 +1,4 @@
-package pl.krysinski.emulator.utilities;
+package pl.krysinski.chip8.domain.utilities;
 
 public class TypeUtilities {
 	public static int intAsByte(int value) {
@@ -8,20 +8,20 @@ public class TypeUtilities {
 	public static int intAsShort(int value) {
 		return (value &= 0xffff);
 	}
-	
+
 	public static short byteAsShort(byte value) {
 		short v = 0;
 		v = (short) (value & 0xff);
 		v = (short) (v & 0x00ff);
-		
+
 		return v;
 	}
-	
+
 	public static int byteAsInt(byte value) {
 		int v = 0;
 		v = value & 0xff;
 		v = v & 0x000000ff;
-		
+
 		return v;
 	}
 

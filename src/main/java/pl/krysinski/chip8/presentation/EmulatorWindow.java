@@ -1,4 +1,4 @@
-package gui;
+package pl.krysinski.chip8.presentation;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -21,9 +21,9 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
-import pl.krysinski.emulator.constants.KeyConstants;
-import pl.krysinski.emulator.constants.Strings;
-import pl.krysinski.emulator.core.CpuCore;
+import pl.krysinski.chip8.domain.constants.KeyConstants;
+import pl.krysinski.chip8.domain.constants.Strings;
+import pl.krysinski.chip8.domain.core.CpuCore;
 
 public class EmulatorWindow extends JFrame {
 	private static final long serialVersionUID = -7408689545574276739L;

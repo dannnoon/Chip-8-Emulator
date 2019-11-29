@@ -1,4 +1,4 @@
-package gui;
+package pl.krysinski.chip8.presentation;
 
 import java.io.File;
 import java.io.IOException;

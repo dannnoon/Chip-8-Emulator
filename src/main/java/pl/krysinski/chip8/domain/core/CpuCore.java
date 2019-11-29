@@ -1,21 +1,17 @@
-package pl.krysinski.emulator.core;
+package pl.krysinski.chip8.domain.core;
 
+import java.awt.Toolkit;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Random;
 
-import jdk.nashorn.internal.runtime.regexp.RegExp;
-
-import java.awt.*;
-
-import pl.krysinski.emulator.constants.Fontset;
-import pl.krysinski.emulator.constants.KeyConstants;
-import pl.krysinski.emulator.constants.MemoryConstants;
-import pl.krysinski.emulator.constants.RegistersConstants;
-import pl.krysinski.emulator.constants.StackConstants;
-import pl.krysinski.emulator.utilities.TypeUtilities;
+import pl.krysinski.chip8.domain.constants.Fontset;
+import pl.krysinski.chip8.domain.constants.KeyConstants;
+import pl.krysinski.chip8.domain.constants.MemoryConstants;
+import pl.krysinski.chip8.domain.constants.RegistersConstants;
+import pl.krysinski.chip8.domain.constants.StackConstants;
+import pl.krysinski.chip8.domain.utilities.TypeUtilities;
 
 public class CpuCore {
 	public static final int GRAPHICS_WIDTH = 64;

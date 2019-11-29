@@ -1,6 +1,6 @@
-package pl.krysinski.emulator.core;
+package pl.krysinski.chip8.domain.core;
 
-import pl.krysinski.emulator.constants.StackConstants;
+import pl.krysinski.chip8.domain.constants.StackConstants;
 
 public class Stack {
 	private short[] stack;

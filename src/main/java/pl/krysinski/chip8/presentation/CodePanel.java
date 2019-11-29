@@ -1,4 +1,4 @@
-package gui;
+package pl.krysinski.chip8.presentation;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -15,12 +15,14 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
-import pl.krysinski.emulator.constants.Strings;
+import pl.krysinski.chip8.domain.constants.Strings;
 
 public class CodePanel extends JPanel {
 
+	private static final long serialVersionUID = -8637917571945097867L;
+
 	private static final String TITLE = "Program code";
-	
+
 	private static final int COLUMNS_NUMBER = 16;
 
 	short[] code;
@@ -58,13 +60,13 @@ public class CodePanel extends JPanel {
 		this.setLayout(layout);
 	}
 
-	private void fillCodeArea() {	
+	private void fillCodeArea() {
 		for (int j = 0; j < COLUMNS_NUMBER; j++) {
 			codeArea.setText(String.format("%s0x%04X\t", codeArea.getText().toString(), j));
 		}
-		
+
 		codeArea.setText(String.format("%s\n\n", codeArea.getText().toString()));
-		
+
 		for (int i = 0; i < code.length; i++) {
 			if (i % COLUMNS_NUMBER != 0)
 				codeArea.setText(String.format("%s\t0x%04X", codeArea.getText().toString(), code[i]));

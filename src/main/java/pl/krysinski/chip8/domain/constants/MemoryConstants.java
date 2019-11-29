@@ -1,4 +1,4 @@
-package pl.krysinski.emulator.constants;
+package pl.krysinski.chip8.domain.constants;
 
 public class MemoryConstants {
 	public static final int MEMORY_SIZE = 0x1000;
@@ -7,7 +7,7 @@ public class MemoryConstants {
 
 	public static final int INTERPRETER_MEMORY_OFFSET = 0x000;
 	public static final int INTERPRETER_MEMORY_SIZE = 0x200;
-	
+
 	public static final int DEFAULT_FONT_MEMORY_OFFSET = 0x00;
 	public static final int DEFAULT_FONT_MEMORY_SIZE = 0x50;
 }

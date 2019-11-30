@@ -13,5 +13,6 @@ class ClearScreen extends CpuCommand {
     public void invoke(ChipSystem system) {
         system.getGraphicsManager().clear();
         system.getDrawFlag().setValue(true);
+        system.getProgramCounter().nextInstruction();
     }
 }

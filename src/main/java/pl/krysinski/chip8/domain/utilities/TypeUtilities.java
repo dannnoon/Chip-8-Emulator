@@ -44,4 +44,13 @@ public class TypeUtilities {
 	public static byte getYByte(short value) {
 		return (byte) ((value >>> 4) & 0xF);
 	}
+
+	public static boolean hasCarryBite(short value) {
+		short carryBit = (short) ((value >>> 15) & 0x0001);
+		return carryBit == 1;
+	}
+
+	public static boolean hasSignBit(short value) {
+		return value < 0;
+	}
 }
